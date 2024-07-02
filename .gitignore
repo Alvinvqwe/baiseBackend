@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.idea
+.vscode
+README.md
+config/db.js
+config/ga4Auth.json
