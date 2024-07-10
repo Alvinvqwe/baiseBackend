@@ -4,26 +4,29 @@ const tagService = require("../models/tag");
 const videoUtil = require("../utils/videoUtils");
 const path = require("path");
 const { userAuth, adminAuth } = require("../middlewares/auth");
+const config = require("../../config/videoConfig");
+const fs = require("fs");
 
 const router = new Router({
   prefix: "/video",
 });
 
-router.get("/tags", async (ctx) => {
-  ctx.body = await tagService.getTopTags();
+router.get("/tags", userAuth, async (ctx) => {
+  const res = await tagService.getTopTags();
+  ctx.body = res;
 });
 
 // upload video
 // login required
 router.post("/upload", async (ctx) => {
-  if (
-    !ctx.state.user ||
-    ctx.state.user.role !== "user" ||
-    ctx.state.user.role !== "admin"
-  ) {
-    ctx.status = 401;
-    ctx.body = { error: "Unauthorized" };
-  }
+  // if (
+  //   !ctx.state.user ||
+  //   ctx.state.user.role !== "user" ||
+  //   ctx.state.user.role !== "admin"
+  // ) {
+  //   ctx.status = 401;
+  //   ctx.body = { error: "Unauthorized" };
+  // }
   const { title, description, tags } = ctx.request.body;
   const file = ctx.request.files.file;
   const { access_type } = ctx.request.body;
@@ -44,43 +47,78 @@ router.post("/upload", async (ctx) => {
     file.newFilename,
     path.extname(file.newFilename)
   );
-
-  if (ctx.state.user && ctx.state.user.role === "user") {
-    //video insert sql
-    await videoService.addVideo(
-      title,
-      description,
-      ctx.state.user.id,
-      baseName,
-      duration,
-      current,
-      "pending",
-      null,
-      access_type
-    );
-  } else if (ctx.state.user && ctx.state.user.role === "admin") {
-    await videoUtil.addLogosOrTexts(file.filename);
-    // const { resolutions } = await videoUtil.convertAndGenerateResolutions(
-    //   file.newFilename,
-    //   true
-    // );
-    //video insert sql
-    var res = await videoService.addVideo(
-      title,
-      description,
-      ctx.state.user.id,
-      baseName,
-      duration,
-      current,
-      "approved",
-      ctx.state.user.id,
-      access_type
-    );
-  }
+  //console.log(ctx.state.user);
+  // var res = {};
+  // if (ctx.state.user && ctx.state.user.role === "user") {
+  //   //video insert sql
+  //   await videoService.addVideo(
+  //     title,
+  //     description,
+  //     ctx.state.user.id,
+  //     baseName,
+  //     duration,
+  //     current,
+  //     "pending",
+  //     null,
+  //     access_type
+  //   );
+  // } else if (ctx.state.user && ctx.state.user.role === "admin") {
+  //   await videoUtil.addLogosOrTexts(file.newFilename);
+  //   // const { resolutions } = await videoUtil.convertAndGenerateResolutions(
+  //   //   file.newFilename,
+  //   //   true
+  //   // );
+  //   //video insert sql
+  //   console.log(
+  //     title,
+  //     description,
+  //     ctx.state.user.id,
+  //     baseName,
+  //     duration,
+  //     current,
+  //     "approved",
+  //     ctx.state.user.id,
+  //     access_type
+  //   );
+  //   res = await videoService.addVideo(
+  //     title,
+  //     description,
+  //     ctx.state.user.id,
+  //     baseName,
+  //     duration,
+  //     current,
+  //     "approved",
+  //     ctx.state.user.id,
+  //     access_type
+  //   );
+  // }
+  //await videoUtil.addLogosOrTexts(file.newFilename);
+  console.log(
+    title,
+    description,
+    1,
+    baseName,
+    duration,
+    current.split("x")[0] + "p",
+    "approved",
+    1,
+    access_type
+  );
+  const res = await videoService.addVideo(
+    title,
+    description,
+    1,
+    baseName,
+    duration,
+    current.split("x")[0] + "p",
+    "approved",
+    1,
+    access_type
+  );
   if (!res.success) {
     ctx.status = 400;
     ctx.body = res;
-    ctx.body = { success: false, message: "上传失败", data: [] };
+    return;
   }
 
   for (const item of JSON.parse(tags)) {
@@ -88,8 +126,8 @@ router.post("/upload", async (ctx) => {
     if (!tag) {
       tag = await tagService.addTag(item);
     }
-    console.log(tag, video);
-    await tagService.addLinkTag(video.id, tag.id);
+    console.log(tag, res);
+    await tagService.addLinkTag(res.data[0].id, tag.id);
   }
   ctx.body = { success: true, message: "上传成功", data: [] };
 });
@@ -104,7 +142,7 @@ router.post("/admin/review", adminAuth, async (ctx) => {
 
 // 获取视频列表
 // login not required
-router.get("/", async (ctx) => {
+router.post("/", async (ctx) => {
   const { type, limit, offset } = ctx.request.body;
   switch (type) {
     case "reccomended":
@@ -134,7 +172,7 @@ router.get("/", async (ctx) => {
 
 // 获取视频列表
 // admin login required
-router.get("/admin", adminAuth, async (ctx) => {
+router.post("/admin", adminAuth, async (ctx) => {
   const { type, limit, offset } = ctx.request.body;
   switch (type) {
     case "viewed ranking":
@@ -192,6 +230,32 @@ router.post("/user", userAuth, async (ctx) => {
       break;
   }
   ctx.body = videos;
+});
+
+router.get("/image/:url", async (ctx) => {
+  const url = ctx.params.url;
+  let imagePath = path.join(config.thumbnailOutputDir, url, ".jpg");
+  ctx.type = "image/jpeg";
+  ctx.body = fs.createReadStream(imagePath);
+});
+
+router.get("/shortClips/:url", async (ctx) => {
+  const url = ctx.params.url;
+  let shortClipsPath = path.join(config.shortClipsDir, url, ".mp4");
+  ctx.type = "video/mp4";
+  ctx.body = fs.createReadStream(shortClipsPath);
+});
+
+router.get("/:url", async (ctx) => {
+  const url = ctx.params.url;
+  let videoPath = path.join(
+    config.videoOutputDir,
+    config.videoType,
+    url,
+    ".mp4"
+  );
+  ctx.type = "video/mp4";
+  ctx.body = fs.createReadStream(videoPath);
 });
 
 // router.get("/admin/tags", adminAuth, async (ctx) => {

@@ -1,5 +1,9 @@
 const jwt = require("jsonwebtoken");
-const SECRET_KEY = process.env.JWT_SECRET || "your_jwt_secret"; // Make sure to set your JWT secret key in environment
+const SECRET_KEY = "wx5Uda1z-0CRDnziIL9UNRvU36rAlzslgvPXcP5o-Ns=";
+const jwksClient = require("jwks-rsa");
+const client = jwksClient({
+  jwksUri: "https://www.googleapis.com/oauth2/v3/certs",
+});
 
 // Generate JWT token
 const generateToken = (payload) => {
@@ -7,8 +11,8 @@ const generateToken = (payload) => {
 };
 
 // Verify JWT token
-const verifyToken = (token) => {
+function verifyToken(token) {
   return jwt.verify(token, SECRET_KEY);
-};
+}
 
 module.exports = { generateToken, verifyToken };

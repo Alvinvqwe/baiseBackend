@@ -1,7 +1,7 @@
 -- 用户表
 CREATE TABLE Users (
     id SERIAL PRIMARY KEY,                                  -- 用户ID，自增主键
-    username VARCHAR(50) UNIQUE,                            -- 用户名，必须唯一
+    username VARCHAR(50),                            -- 用户名，必须唯一
     email VARCHAR(100) UNIQUE NOT NULL,                     -- 电子邮件地址，必须唯一
     email_verified BOOLEAN DEFAULT FALSE,                   -- 邮箱验证状态，默认未验证
     phone_number VARCHAR(20) UNIQUE,                        -- 用户注册手机号，必须唯一

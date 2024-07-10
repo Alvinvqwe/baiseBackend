@@ -24,7 +24,7 @@ module.exports = {
   },
   waterMarksOptions: {
     fixed: {
-      logoPath: path.resolve(__dirname, "./public/logo.png"),
+      logoPath: path.resolve(__dirname, "../public/logo.png"),
       opacity: 0.8,
       startX: 10,
       startY: 10,

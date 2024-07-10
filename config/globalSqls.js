@@ -1,8 +1,6 @@
-const { get } = require("../src/routes/ga4Routes");
-
 const GLOBAL_SQLS = {
   USERS: {
-    CHECK_USER: `SELECT * FROM Users WHERE email = $1 OR username = $2;`,
+    CHECK_USER: `SELECT * FROM Users WHERE email = $1`,
     GET_USER_BY_ID: `SELECT * FROM Users WHERE id = $1;`,
     GET_USER_BY_EMAIL: `SELECT * FROM Users WHERE email = $1;`,
     GET_USER_BY_USERNAME: `SELECT * FROM Users WHERE username = $1;`,
@@ -10,6 +8,7 @@ const GLOBAL_SQLS = {
         INSERT INTO Users (username, email, email_verified, password_hash, phone_number, phone_verified, registration_date, login_count, last_login, registration_method, source_channel, registration_ip, last_login_ip, membership_level)
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14) RETURNING *;
       `,
+    UPDATE_LOGIN: `UPDATE Users SET login_count = login_count + 1, last_login = $1, last_login_ip = $2 WHERE id = $3;`,
   },
   ADMIN_ACCOUNTS: {
     GET_ADMIN_ACCOUNT_BY_EMAIL: `SELECT * FROM AdminAccounts WHERE email = $1;`,
@@ -25,7 +24,7 @@ const GLOBAL_SQLS = {
   VIDEOS: {
     UPLOAD_VIDEO: `
         INSERT INTO videos (title, descriptions, uploader_id, video_url, video_length, clarity, review_status, reviewer_id, access_type)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id;
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING *;
       `,
     GET_PUBLIC_VIDEOS: `
         SELECT * FROM Videos WHERE access_type = 'public' LIMIT $1 OFFSET $2;

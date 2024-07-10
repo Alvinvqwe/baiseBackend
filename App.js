@@ -43,12 +43,11 @@ app.use(bodyParser());
 // 使用错误处理中间件
 app.use(errorHandlingMiddleware);
 
+// 管理员路由
+app.use(session(app));
 // 公共路由
 app.use(authRoutes.routes()).use(authRoutes.allowedMethods());
 app.use(videoRouter.routes()).use(videoRouter.allowedMethods());
-
-// 管理员路由
-app.use(session(app));
 
 // ga4
 app.use(ga4Routes.routes()).use(ga4Routes.allowedMethods());
